@@ -1,15 +1,15 @@
 import { auth } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { Configuration, OpenAIApi } from "openai";
 
 import { increaseApiLimit, checkApiLimit } from "@/lib/api-limit";
 import { checkSubscription } from "@/lib/subscription";
 
-const configuration = new OpenAI({
+const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const openai = new OpenAI(configuration);
+const openai = new OpenAIApi(configuration);
 
 export async function POST(req: Request) {
   try {
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       return new NextResponse("Free trial has expired", { status: 403 });
     }
 
-    const response = await openai.images.generate({
+    const response = await openai.createImage({
       prompt: prompt,
       n: parseInt(amount, 10),
       size: resolution,
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       await increaseApiLimit();
     }
 
-    return NextResponse.json(response.data);
+    return NextResponse.json(response.data.data);
   } catch (error) {
     console.log("[IMAGE_ERROR]", error);
     return new NextResponse("Internal error", { status: 500 });
